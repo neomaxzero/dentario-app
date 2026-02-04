@@ -80,6 +80,7 @@
     @apply border-border;
   }
   body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     @apply bg-background text-foreground;
   }
 }
