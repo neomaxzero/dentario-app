@@ -5,14 +5,21 @@
 ## Auth
 
 [ ] Formulario de Recuperar contrasenia
+[ ] Probar si funciona
 
 ## Clinica
 
 - Por ahora la clinica se crea a mano con un comando SQL.
   [X] Crear Primer clinica de prueba
   [X] Asociar un usuario a una clinica
-  [ ] Crear formulario para cargar un nuevo paciente
-  [ ] Mostrar una lista de todos los pacientes
+  [X] Loguearse a la clinica
+  [X] Seleccionar entre clinicas disponibles  
+  [ ]
+
+## Pacientes
+
+[ ] Crear formulario para cargar un nuevo paciente
+[ ] Mostrar una lista de todos los pacientes
 
 ## Caracteristica de la aplicacion
 
