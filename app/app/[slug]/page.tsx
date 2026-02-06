@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import { Header } from "@/components/header";
+import { AppDashboardShell } from "@/components/app-dashboard-shell";
 import { getUserClinics } from "@/lib/clinics";
 import { createClient } from "@/lib/supabase/server";
 
@@ -30,22 +30,28 @@ export default async function ClinicPage({ params }: ClinicPageProps) {
   }
 
   const clinic = (clinics ?? []).find((item) => item.slug === slug);
+  const isAdmin = (clinics ?? []).some((item) => item.role === "admin");
 
   if (!clinic) {
     notFound();
   }
 
+  const userName =
+    user.user_metadata?.full_name ??
+    user.user_metadata?.name ??
+    user.email?.split("@")[0] ??
+    "Dentario User";
+
   return (
-    <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-12 items-center">
-        <Header clinic={clinic} clinics={clinics ?? []} />
-        <div className="flex-1 w-full max-w-5xl p-5 mt-20">
-          <h1 className="text-2xl font-semibold">{clinic.nombre ?? "Clinica"}</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Bienvenido a la clinica /{clinic.slug}
-          </p>
-        </div>
-      </div>
-    </main>
+    <AppDashboardShell
+      clinic={clinic}
+      clinics={clinics ?? []}
+      isAdmin={isAdmin}
+      user={{
+        name: userName,
+        email: user.email ?? "",
+        avatar: user.user_metadata?.avatar_url ?? "",
+      }}
+    />
   );
 }

@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { translateSupabaseAuthError } from "@/lib/supabase/auth-error";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -50,9 +51,7 @@ export function SignUpForm({
       if (error) throw error;
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
-      setError(
-        error instanceof Error ? error.message : "Ocurrió un error inesperado",
-      );
+      setError(translateSupabaseAuthError(error));
     } finally {
       setIsLoading(false);
     }

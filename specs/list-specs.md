@@ -54,3 +54,33 @@ Y la tabla de usuarios de supabase (Auth)
 - Si el usuario tiene solo una clinica asociada, redireccionar a /app/[slug]
 - Si un usuario no esta asociado con ninguna clinica (no existe registro para el usuario en users_clinica), mostrar un mensaje.
 - Mostrar en el header el nombre de la clinica y el logo
+
+## Crear Nuevo paciente
+
+Campos del formulario:
+
+- Foto de perfil
+- Nombre\*
+- Apellido\*
+- DNI\*
+- E-mail
+- Obra Social\*
+- Numero interno
+- Sexo
+- Fecha de Nacimiento\*
+- Ciudad
+- Direccion
+- Telefono Principal\*
+- Telefono alternativo
+- Observaciones
+
+## Menu administracion
+
+- Usuarios
+- Gestion de odontologos
+  - Agregar profesional
+    - Datos del profesional
+    - Intervalo de atencion (Cuanto es la fraccion de las citas despues para los turnos)
+- Agenda
+- Precios
+- Documentos Clinicos

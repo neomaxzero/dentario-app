@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { translateSupabaseAuthError } from "@/lib/supabase/auth-error";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,7 +39,7 @@ export function ForgotPasswordForm({
       if (error) throw error;
       setSuccess(true);
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Ocurrió un error");
+      setError(translateSupabaseAuthError(error));
     } finally {
       setIsLoading(false);
     }

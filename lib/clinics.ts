@@ -1,14 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+export type ClinicRole = "admin" | "staff";
+
 export type UserClinic = {
   id: number;
   nombre: string | null;
   logo: string | null;
   slug: string | null;
+  role: ClinicRole;
 };
 
 type UserClinicLinkRow = {
   clinica_id: number | null;
+  role: ClinicRole | null;
 };
 
 export async function getUserClinics(
@@ -17,20 +21,20 @@ export async function getUserClinics(
 ): Promise<{ data: UserClinic[] | null; error: string | null }> {
   const { data: links, error: linksError } = await supabase
     .from("usuarios_clinica")
-    .select("clinica_id")
+    .select("clinica_id,role")
     .eq("user_id", userId);
 
   if (linksError) {
     return { data: null, error: linksError.message };
   }
 
-  const clinicIds = Array.from(
-    new Set(
-      ((links ?? []) as UserClinicLinkRow[])
-        .map((row) => row.clinica_id)
-        .filter((id): id is number => typeof id === "number")
-    )
+  const normalizedLinks = ((links ?? []) as UserClinicLinkRow[]).filter(
+    (row): row is { clinica_id: number; role: ClinicRole } =>
+      typeof row.clinica_id === "number" &&
+      (row.role === "admin" || row.role === "staff")
   );
+
+  const clinicIds = Array.from(new Set(normalizedLinks.map((row) => row.clinica_id)));
 
   if (clinicIds.length === 0) {
     return { data: [], error: null };
@@ -50,16 +54,35 @@ export async function getUserClinics(
   );
 
   // If RLS blocks rows in `clinicas`, keep association IDs so user is not treated as unlinked.
-  const normalized = clinicIds.map((id) => {
-    const clinic = clinicsById.get(id);
+  const normalized = normalizedLinks.map(({ clinica_id, role }) => {
+    const clinic = clinicsById.get(clinica_id);
 
     return {
-      id,
+      id: clinica_id,
       nombre: clinic?.nombre ?? null,
       logo: clinic?.logo ?? null,
       slug: clinic?.slug ?? null,
+      role,
     };
   });
 
   return { data: normalized, error: null };
+}
+
+export async function isUserAdmin(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<{ isAdmin: boolean; error: string | null }> {
+  const { data, error } = await supabase
+    .from("usuarios_clinica")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .limit(1);
+
+  if (error) {
+    return { isAdmin: false, error: error.message };
+  }
+
+  return { isAdmin: (data ?? []).length > 0, error: null };
 }

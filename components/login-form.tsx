@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { translateSupabaseAuthError } from "@/lib/supabase/auth-error";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,9 +42,7 @@ export function LoginForm({
       // Update this route to redirect to an authenticated route. The user already has an active session.
       router.push("/app");
     } catch (error: unknown) {
-      setError(
-        error instanceof Error ? error.message : "Ocurrió un error inesperado",
-      );
+      setError(translateSupabaseAuthError(error));
     } finally {
       setIsLoading(false);
     }

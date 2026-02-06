@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-const AUTH_IMAGE_URL =
-  "https://pngmagic.com/webp_images/abstract-blue-gradient-background-images-for-free-download_MHZ.webp";
+const AUTH_IMAGE_URL = "/splash-auth.jpg";
+const LOGO_IMAGE_URL = "/logo-white.png";
 
 type AuthSplitLayoutProps = {
   children: ReactNode;
@@ -19,7 +19,10 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
             <div
               className="h-full min-h-[520px] w-full rounded-2xl bg-cover bg-center"
               style={{
-                backgroundImage: `url(${AUTH_IMAGE_URL})`,
+                backgroundImage: `url(${LOGO_IMAGE_URL}), url(${AUTH_IMAGE_URL})`,
+                backgroundPosition: "bottom 24px right 24px, center",
+                backgroundRepeat: "no-repeat, no-repeat",
+                backgroundSize: "60px auto, cover",
               }}
             />
           </div>
