@@ -4,7 +4,7 @@
 
 ## Auth
 
-[ ] Formulario de Recuperar contrasenia
+[X] Formulario de Recuperar contrasenia
 [ ] Probar si funciona
 
 ## Clinica
