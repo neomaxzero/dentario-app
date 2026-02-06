@@ -38,7 +38,7 @@ export default async function ClinicPage({ params }: ClinicPageProps) {
   return (
     <main className="min-h-screen flex flex-col items-center">
       <div className="flex-1 w-full flex flex-col gap-12 items-center">
-        <Header clinic={clinic} />
+        <Header clinic={clinic} clinics={clinics ?? []} />
         <div className="flex-1 w-full max-w-5xl p-5 mt-20">
           <h1 className="text-2xl font-semibold">{clinic.nombre ?? "Clinica"}</h1>
           <p className="text-sm text-muted-foreground mt-2">
