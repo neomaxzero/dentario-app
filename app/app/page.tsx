@@ -7,17 +7,14 @@ export const dynamic = "force-dynamic";
 
 export default async function AppPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const { data: claimsData, error: authError } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
 
-  if (authError || !user) {
+  if (authError || !userId) {
     redirect("/auth/login");
   }
 
-  const { data: clinics, error } = await getUserClinics(supabase, user.id);
-
+  const { data: clinics, error } = await getUserClinics(supabase, userId);
   if (error) {
     redirect("/auth/login");
   }
@@ -28,5 +25,5 @@ export default async function AppPage() {
     redirect("/auth/login");
   }
 
-  redirect(`/app/${preferredClinic.slug}`);
+  redirect(`/app/${encodeURIComponent(preferredClinic.slug)}`);
 }
