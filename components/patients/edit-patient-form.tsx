@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { PatientAvatarUploader } from "@/components/patients/patient-avatar-uploader";
@@ -11,17 +11,56 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreatePatient } from "@/lib/hooks/use-patients";
-import type { CreatePatientInput, PatientSpecialty } from "@/lib/patients";
+import { usePatient, useUpdatePatient } from "@/lib/hooks/use-patients";
+import type { CreatePatientInput, Patient, PatientSpecialty } from "@/lib/patients";
+
+type EditPatientFormProps = {
+  clinicSlug: string;
+  patientId: string;
+};
 
 const SPECIALTIES: { value: PatientSpecialty; label: string }[] = [
   { value: "ortopedia", label: "Ortopedia" },
   { value: "ortodoncia", label: "Ortodoncia" },
 ];
 
-export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
+function mapPatientToFormValues(patient: Patient | null | undefined) {
+  if (!patient) {
+    return null;
+  }
+
+  return {
+    nombre: patient.nombre ?? "",
+    apellido: patient.apellido ?? "",
+    dni: patient.dni ?? "",
+    email: patient.email ?? "",
+    obraSocial: patient.obra_social ?? "",
+    planObraSocial: patient.plan_obra_social ?? "",
+    especialidad: patient.especialidad ?? [],
+    numeroInterno: patient.numero_interno ?? "",
+    sexo: patient.sexo ?? "",
+    fechaNacimiento: patient.fecha_nacimiento ?? "",
+    ciudad: patient.ciudad ?? "",
+    direccion: patient.direccion ?? "",
+    telefonoPrincipal: patient.telefono_principal ?? "",
+    telefonoAlternativo: patient.telefono_alternativo ?? "",
+    observaciones: patient.observaciones ?? "",
+  } satisfies CreatePatientInput;
+}
+
+export function EditPatientForm({ clinicSlug, patientId }: EditPatientFormProps) {
   const router = useRouter();
-  const createPatient = useCreatePatient(clinicSlug);
+  const parsedPatientId = /^\d+$/.test(patientId)
+    ? Number.parseInt(patientId, 10)
+    : Number.NaN;
+  const isValidPatientId = Number.isInteger(parsedPatientId) && parsedPatientId > 0;
+  const detailPath = `/app/${encodeURIComponent(clinicSlug)}/pacientes/${patientId}`;
+  const patientsPath = `/app/${encodeURIComponent(clinicSlug)}/pacientes`;
+  const { data: patient, isPending: isLoadingPatient, error: loadError } = usePatient(
+    clinicSlug,
+    isValidPatientId ? parsedPatientId : null,
+  );
+  const updatePatient = useUpdatePatient(clinicSlug, isValidPatientId ? parsedPatientId : 0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -30,14 +69,38 @@ export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<CreatePatientInput>({
     defaultValues: {
-      sexo: "",
+      nombre: "",
+      apellido: "",
+      dni: "",
+      email: "",
+      obraSocial: "",
+      planObraSocial: "",
       especialidad: [],
+      numeroInterno: "",
+      sexo: "",
       fechaNacimiento: "",
+      ciudad: "",
+      direccion: "",
+      telefonoPrincipal: "",
+      telefonoAlternativo: "",
+      observaciones: "",
     },
   });
+
+  useEffect(() => {
+    const values = mapPatientToFormValues(patient);
+
+    if (!values) {
+      return;
+    }
+
+    reset(values);
+    setAvatarUrl(patient?.foto_perfil_url ?? null);
+  }, [patient, reset]);
   const selectedSpecialties = watch("especialidad") ?? [];
 
   function toggleSpecialty(specialty: PatientSpecialty, checked: boolean) {
@@ -53,14 +116,14 @@ export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
     setSubmitError(null);
 
     try {
-      await createPatient.mutateAsync({
+      await updatePatient.mutateAsync({
         ...values,
         fotoPerfilUrl: avatarUrl,
         sexo: values.sexo || "",
         especialidad: values.especialidad ?? [],
       });
 
-      router.push(`/app/${encodeURIComponent(clinicSlug)}/pacientes`);
+      router.push(detailPath);
       router.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo guardar el paciente.";
@@ -68,17 +131,62 @@ export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
     }
   });
 
+  if (!isValidPatientId) {
+    return (
+      <div className="mx-auto w-full max-w-4xl rounded-xl border border-border/60 bg-card p-6">
+        <h1 className="text-xl font-semibold">Editar paciente</h1>
+        <p className="mt-2 text-sm text-destructive">El ID del paciente no es válido.</p>
+        <Button asChild variant="outline" className="mt-4">
+          <Link href={patientsPath}>Volver a pacientes</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (isLoadingPatient) {
+    return (
+      <div className="mx-auto w-full max-w-4xl rounded-xl border border-border/60 bg-card p-6">
+        <h1 className="text-xl font-semibold">Editar paciente</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Cargando datos...</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="mx-auto w-full max-w-4xl rounded-xl border border-border/60 bg-card p-6">
+        <h1 className="text-xl font-semibold">Editar paciente</h1>
+        <p className="mt-2 text-sm text-destructive">{loadError.message}</p>
+        <Button asChild variant="outline" className="mt-4">
+          <Link href={detailPath}>Volver al detalle</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <div className="mx-auto w-full max-w-4xl rounded-xl border border-border/60 bg-card p-6">
+        <h1 className="text-xl font-semibold">Editar paciente</h1>
+        <p className="mt-2 text-sm text-muted-foreground">No se encontró el paciente.</p>
+        <Button asChild variant="outline" className="mt-4">
+          <Link href={patientsPath}>Volver a pacientes</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-4xl rounded-xl border border-border/60 bg-card p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Nuevo paciente</h1>
+          <h1 className="text-xl font-semibold">Editar paciente</h1>
           <p className="text-sm text-muted-foreground">
-            Completá la información para crear la ficha del paciente.
+            Modificá la información del paciente.
           </p>
         </div>
         <Button asChild variant="outline">
-          <Link href={`/app/${encodeURIComponent(clinicSlug)}/pacientes`}>Cancelar</Link>
+          <Link href={detailPath}>Cancelar</Link>
         </Button>
       </div>
 
@@ -203,8 +311,8 @@ export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
         {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={createPatient.isPending}>
-            {createPatient.isPending ? "Guardando..." : "Agregar paciente"}
+          <Button type="submit" disabled={updatePatient.isPending}>
+            {updatePatient.isPending ? "Guardando..." : "Guardar cambios"}
           </Button>
         </div>
       </form>

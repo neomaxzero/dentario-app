@@ -86,15 +86,25 @@ function showValue(value: string | null, fallback = "Sin dato") {
 }
 
 function formatSpecialty(value: Patient["especialidad"]) {
-  if (value === "ortopedia") {
-    return "Ortopedia";
+  const values = value ?? [];
+
+  if (values.length === 0) {
+    return "Sin especialidad";
   }
 
-  if (value === "ortodoncia") {
-    return "Ortodoncia";
-  }
+  return values
+    .map((specialty) => {
+      if (specialty === "ortopedia") {
+        return "Ortopedia";
+      }
 
-  return "Sin especialidad";
+      if (specialty === "ortodoncia") {
+        return "Ortodoncia";
+      }
+
+      return "Sin especialidad";
+    })
+    .join(", ");
 }
 
 function buildBasicData(patient: Patient) {
@@ -148,6 +158,7 @@ export function PatientDetailsPage({
     error,
   } = usePatient(clinicSlug, isValidPatientId ? parsedPatientId : null);
   const patientsPath = `/app/${encodeURIComponent(clinicSlug)}/pacientes`;
+  const editPath = `${patientsPath}/${patientId}/editar`;
 
   if (!isValidPatientId) {
     return (
@@ -248,9 +259,14 @@ export function PatientDetailsPage({
             </div>
           </div>
         </div>
-        <Button asChild variant="outline">
-          <Link href={patientsPath}>Volver a pacientes</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild>
+            <Link href={editPath}>Editar paciente</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={patientsPath}>Volver a pacientes</Link>
+          </Button>
+        </div>
       </div>
 
       <Collapsible>

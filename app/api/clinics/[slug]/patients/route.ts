@@ -13,6 +13,24 @@ function required(value: string | null | undefined) {
   return (value ?? "").trim();
 }
 
+const allowedSpecialties = new Set(["ortopedia", "ortodoncia"] as const);
+
+function normalizeSpecialties(value: unknown) {
+  const rawValues = Array.isArray(value)
+    ? value
+    : typeof value === "string" && value
+      ? [value]
+      : [];
+
+  const filtered = rawValues.filter(
+    (item): item is "ortopedia" | "ortodoncia" =>
+      typeof item === "string" && allowedSpecialties.has(item as "ortopedia" | "ortodoncia"),
+  );
+
+  const unique = [...new Set(filtered)];
+  return unique.length > 0 ? unique : null;
+}
+
 export async function GET(_request: Request, context: RouteContext) {
   const requestUrl = new URL(_request.url);
   const rawPage = Number.parseInt(requestUrl.searchParams.get("page") ?? "1", 10);
@@ -137,9 +155,7 @@ export async function POST(request: Request, context: RouteContext) {
   const sexo = body.sexo === "femenino" || body.sexo === "masculino" || body.sexo === "otro"
     ? body.sexo
     : null;
-  const especialidad = body.especialidad === "ortopedia" || body.especialidad === "ortodoncia"
-    ? body.especialidad
-    : null;
+  const especialidad = normalizeSpecialties(body.especialidad);
 
   if (!nombre || !apellido || !fechaNacimiento) {
     return NextResponse.json(

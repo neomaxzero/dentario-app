@@ -53,10 +53,12 @@ export function AppDashboardShell({
   const encodedClinicSlug = encodeURIComponent(clinicSlug);
   const patientsPath = `/app/${encodedClinicSlug}/pacientes`;
   const patientDetailPrefix = `${patientsPath}/`;
+  const isEditPatientPage =
+    pathname.startsWith(patientDetailPrefix) && pathname.endsWith("/editar");
   const isPatientsPage = pathname === patientsPath;
   const isNewPatientPage = pathname === `${patientsPath}/nuevo`;
   const isPatientDetailPage =
-    pathname.startsWith(patientDetailPrefix) && !isNewPatientPage;
+    pathname.startsWith(patientDetailPrefix) && !isNewPatientPage && !isEditPatientPage;
 
   const nextQueryWithoutModal = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -87,7 +89,7 @@ export function AppDashboardShell({
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  {isPatientsPage || isNewPatientPage || isPatientDetailPage ? (
+                  {isPatientsPage || isNewPatientPage || isPatientDetailPage || isEditPatientPage ? (
                     <BreadcrumbLink href={patientsPath}>Pacientes</BreadcrumbLink>
                   ) : (
                     <BreadcrumbPage>{clinic.nombre ?? "Panel de clínica"}</BreadcrumbPage>
@@ -106,6 +108,14 @@ export function AppDashboardShell({
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
                       <BreadcrumbPage>Detalle del paciente</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </>
+                ) : null}
+                {isEditPatientPage ? (
+                  <>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>Editar paciente</BreadcrumbPage>
                     </BreadcrumbItem>
                   </>
                 ) : null}

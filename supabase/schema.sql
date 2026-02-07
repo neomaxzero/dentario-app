@@ -32,7 +32,7 @@ create table public.pacientes (
   email text null,
   obra_social text null,
   plan_obra_social text null,
-  especialidad text null,
+  especialidad text[] null,
   numero_interno text null,
   sexo text null,
   fecha_nacimiento date not null,
@@ -45,7 +45,13 @@ create table public.pacientes (
   constraint pacientes_clinica_dni_unique unique (clinica_id, dni),
   constraint pacientes_clinica_id_fkey foreign KEY (clinica_id) references clinicas (id),
   constraint pacientes_sexo_check check (sexo in ('masculino', 'femenino', 'otro')),
-  constraint pacientes_especialidad_check check (especialidad in ('ortopedia', 'ortodoncia'))
+  constraint pacientes_especialidad_check check (
+    especialidad is null
+    or (
+      especialidad <@ array['ortopedia', 'ortodoncia']::text[]
+      and cardinality(especialidad) between 1 and 2
+    )
+  )
 ) TABLESPACE pg_default;
 
 create extension if not exists pg_trgm;

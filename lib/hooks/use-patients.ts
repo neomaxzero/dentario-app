@@ -95,6 +95,34 @@ export function useCreatePatient(clinicSlug: string) {
   });
 }
 
+export function useUpdatePatient(clinicSlug: string, patientId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: CreatePatientInput) => {
+      const response = await fetch(
+        `/api/clinics/${encodeURIComponent(clinicSlug)}/patients/${patientId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      return parseResponse<{ patient: Patient }>(response);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["patients", clinicSlug] }),
+        queryClient.invalidateQueries({ queryKey: ["patient", clinicSlug, patientId] }),
+        queryClient.invalidateQueries({ queryKey: ["patients-search", clinicSlug] }),
+      ]);
+    },
+  });
+}
+
 export function useUploadPatientAvatar(clinicSlug: string) {
   return useMutation({
     mutationFn: async (file: File) => {
