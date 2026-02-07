@@ -74,8 +74,8 @@ export function AppDashboardShell({
     <SidebarProvider>
       <AppSidebar clinics={clinics} activeClinic={clinic} user={user} isAdmin={isAdmin} />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 bg-background/95 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex min-w-0 items-center gap-2 px-4">
+        <header className="flex shrink-0 flex-col gap-2 bg-background/95 py-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-auto md:h-16 md:flex-row md:items-center md:gap-2 md:py-0 group-has-data-[collapsible=icon]/sidebar-wrapper:md:h-12">
+          <div className="flex w-full min-w-0 items-center gap-2 px-4 md:w-auto">
             <SidebarTrigger className="-ml-1" />
             <Breadcrumb className="min-w-0">
               <BreadcrumbList>
@@ -101,7 +101,10 @@ export function AppDashboardShell({
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className="ml-auto hidden w-full max-w-sm px-4 md:block">
+          <div className="w-full px-4 md:hidden">
+            <PatientTypeaheadSearch clinicSlug={clinicSlug} />
+          </div>
+          <div className="hidden w-full max-w-sm px-4 md:ml-auto md:block">
             <PatientTypeaheadSearch clinicSlug={clinicSlug} />
           </div>
         </header>
