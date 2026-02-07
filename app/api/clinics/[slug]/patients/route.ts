@@ -14,6 +14,16 @@ function required(value: string | null | undefined) {
 }
 
 export async function GET(_request: Request, context: RouteContext) {
+  const requestUrl = new URL(_request.url);
+  const rawPage = Number.parseInt(requestUrl.searchParams.get("page") ?? "1", 10);
+  const rawPageSize = Number.parseInt(requestUrl.searchParams.get("pageSize") ?? "10", 10);
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+  const pageSize = Number.isFinite(rawPageSize) && rawPageSize > 0
+    ? Math.min(rawPageSize, 100)
+    : 10;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
   const { slug } = await context.params;
   const supabase = await createClient();
   const {
@@ -50,19 +60,32 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  const { data: patients, error: patientsError } = await adminSupabase
+  const { data: patients, count, error: patientsError } = await adminSupabase
     .from("pacientes")
     .select(
-      "id,clinica_id,foto_perfil_url,nombre,apellido,dni,email,obra_social,plan_obra_social,especialidad,numero_interno,sexo,fecha_nacimiento,ciudad,direccion,telefono_principal,telefono_alternativo,observaciones,created_at"
+      "id,clinica_id,foto_perfil_url,nombre,apellido,dni,email,obra_social,plan_obra_social,especialidad,numero_interno,sexo,fecha_nacimiento,ciudad,direccion,telefono_principal,telefono_alternativo,observaciones,created_at",
+      { count: "exact" },
     )
     .eq("clinica_id", clinic.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (patientsError) {
     return NextResponse.json({ error: patientsError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ patients: patients ?? [] });
+  const total = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  return NextResponse.json({
+    patients: patients ?? [],
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages,
+    },
+  });
 }
 
 export async function POST(request: Request, context: RouteContext) {

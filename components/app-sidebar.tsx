@@ -53,36 +53,33 @@ export function AppSidebar({
         plan: "Dentario",
         url: clinic.slug ? `/app/${clinic.slug}/pacientes` : "#",
       })),
-    [clinics]
+    [clinics],
   );
 
-  const navMain = React.useMemo(
-    () => {
-      const patientsUrl = activeClinic.slug
-        ? `/app/${encodeURIComponent(activeClinic.slug)}/pacientes`
-        : "#";
+  const navMain = React.useMemo(() => {
+    const patientsUrl = activeClinic.slug
+      ? `/app/${encodeURIComponent(activeClinic.slug)}/pacientes`
+      : "#";
 
-      return [
-        {
-          title: "Adminstrar",
-          url: patientsUrl,
-          icon: Users,
-          isActive: pathname.startsWith(patientsUrl),
-          items: [{ title: "Pacientes", url: patientsUrl }],
-        },
-        {
-          title: "Configuracion",
-          url: "#",
-          icon: Settings2,
-          items: [
-            { title: "Clinica", url: "#" },
-            { title: "Equipo", url: "#" },
-          ],
-        },
-      ];
-    },
-    [activeClinic.slug, pathname]
-  );
+    return [
+      {
+        title: "Administrar",
+        url: patientsUrl,
+        icon: Users,
+        isActive: pathname.startsWith(patientsUrl),
+        items: [{ title: "Pacientes", url: patientsUrl }],
+      },
+      {
+        title: "Configuracion",
+        url: "#",
+        icon: Settings2,
+        items: [
+          { title: "Clinica", url: "#" },
+          { title: "Equipo", url: "#" },
+        ],
+      },
+    ];
+  }, [activeClinic.slug, pathname]);
 
   return (
     <Sidebar collapsible="icon" {...props}>

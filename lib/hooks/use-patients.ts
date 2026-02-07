@@ -6,6 +6,12 @@ import type { CreatePatientInput, Patient } from "@/lib/patients";
 
 type PatientsResponse = {
   patients?: Patient[];
+  pagination?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
   error?: string;
 };
 
@@ -25,15 +31,36 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return data;
 }
 
-export function usePatients(clinicSlug: string) {
+export function usePatients(
+  clinicSlug: string,
+  options?: { page?: number; pageSize?: number },
+) {
+  const page = options?.page ?? 1;
+  const pageSize = options?.pageSize ?? 10;
+
   return useQuery({
-    queryKey: ["patients", clinicSlug],
+    queryKey: ["patients", clinicSlug, page, pageSize],
     queryFn: async () => {
-      const response = await fetch(`/api/clinics/${encodeURIComponent(clinicSlug)}/patients`);
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+      });
+      const response = await fetch(
+        `/api/clinics/${encodeURIComponent(clinicSlug)}/patients?${params.toString()}`,
+      );
       const data = await parseResponse<PatientsResponse>(response);
-      return data.patients ?? [];
+      return {
+        patients: data.patients ?? [],
+        pagination: data.pagination ?? {
+          page,
+          pageSize,
+          total: data.patients?.length ?? 0,
+          totalPages: 1,
+        },
+      };
     },
     enabled: Boolean(clinicSlug),
+    placeholderData: (previousData) => previousData,
   });
 }
 

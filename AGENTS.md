@@ -1,3 +1,7 @@
+## General Instructions
+
+- Dentario is for Argentina. Make the visible text in SPANISH. Always.
+
 # Tech Stack
 
 - API Calls: Use react-query for calls
