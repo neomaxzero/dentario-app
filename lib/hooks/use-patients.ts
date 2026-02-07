@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { CreatePatientInput, Patient } from "@/lib/patients";
+import type { CreatePatientInput, Patient, PatientSearchResult } from "@/lib/patients";
 
 type PatientsResponse = {
   patients?: Patient[];
@@ -18,6 +18,11 @@ type PatientsResponse = {
 type UploadAvatarResponse = {
   path?: string;
   publicUrl?: string;
+  error?: string;
+};
+
+type SearchPatientsResponse = {
+  patients?: PatientSearchResult[];
   error?: string;
 };
 
@@ -101,5 +106,27 @@ export function useUploadPatientAvatar(clinicSlug: string) {
 
       return parseResponse<UploadAvatarResponse>(response);
     },
+  });
+}
+
+export function useSearchPatients(clinicSlug: string, query: string) {
+  const normalizedQuery = query.trim();
+
+  return useQuery({
+    queryKey: ["patients-search", clinicSlug, normalizedQuery],
+    queryFn: async ({ signal }) => {
+      const params = new URLSearchParams({
+        q: normalizedQuery,
+        limit: "8",
+      });
+      const response = await fetch(
+        `/api/clinics/${encodeURIComponent(clinicSlug)}/patients/search?${params.toString()}`,
+        { signal },
+      );
+      const data = await parseResponse<SearchPatientsResponse>(response);
+      return data.patients ?? [];
+    },
+    enabled: Boolean(clinicSlug) && normalizedQuery.length >= 2,
+    staleTime: 30_000,
   });
 }

@@ -23,6 +23,16 @@ export type Patient = {
   created_at: string;
 };
 
+export type PatientSearchResult = {
+  id: number;
+  nombre: string;
+  apellido: string;
+  foto_perfil_url: string | null;
+  dni: string | null;
+  telefono_principal: string | null;
+  obra_social: string | null;
+};
+
 export type CreatePatientInput = {
   fotoPerfilUrl?: string | null;
   nombre: string;

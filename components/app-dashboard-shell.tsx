@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { UserClinic } from "@/lib/clinics";
 import { AppSidebar } from "@/components/app-sidebar";
+import { PatientTypeaheadSearch } from "@/components/patients/patient-typeahead-search";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -74,9 +75,9 @@ export function AppDashboardShell({
       <AppSidebar clinics={clinics} activeClinic={clinic} user={user} isAdmin={isAdmin} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 bg-background/95 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
+          <div className="flex min-w-0 items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-            <Breadcrumb>
+            <Breadcrumb className="min-w-0">
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
                   <BreadcrumbLink href={`/app/${encodedClinicSlug}`}>Dentario</BreadcrumbLink>
@@ -99,6 +100,9 @@ export function AppDashboardShell({
                 ) : null}
               </BreadcrumbList>
             </Breadcrumb>
+          </div>
+          <div className="ml-auto hidden w-full max-w-sm px-4 md:block">
+            <PatientTypeaheadSearch clinicSlug={clinicSlug} />
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-4">

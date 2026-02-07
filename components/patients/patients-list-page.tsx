@@ -79,7 +79,7 @@ export function PatientsListPage({ clinicSlug }: { clinicSlug: string }) {
   }, [page, totalPages]);
 
   return (
-    <div className="flex min-h-[calc(100dvh-2rem)] flex-col rounded-xl border border-border/60 bg-card p-6">
+    <div className="flex min-h-[calc(100dvh-6rem)] flex-col rounded-xl border border-border/60 bg-card p-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold">Pacientes</h1>
