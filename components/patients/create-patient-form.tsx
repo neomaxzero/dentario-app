@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 
 import { PatientAvatarUploader } from "@/components/patients/patient-avatar-uploader";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreatePatient } from "@/lib/hooks/use-patients";
+import { useCreatePatient, useSocialInsurances } from "@/lib/hooks/use-patients";
 import type { CreatePatientInput, PatientSpecialty } from "@/lib/patients";
 
 const SPECIALTIES: { value: PatientSpecialty; label: string }[] = [
@@ -22,6 +23,7 @@ const SPECIALTIES: { value: PatientSpecialty; label: string }[] = [
 export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
   const router = useRouter();
   const createPatient = useCreatePatient(clinicSlug);
+  const { data: socialInsurances = [], isPending: isLoadingSocialInsurances } = useSocialInsurances(clinicSlug);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -30,15 +32,25 @@ export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<CreatePatientInput>({
     defaultValues: {
       sexo: "",
+      obraSocialIds: [],
       especialidad: [],
       fechaNacimiento: "",
     },
   });
   const selectedSpecialties = watch("especialidad") ?? [];
+  const socialInsuranceOptions = useMemo(
+    () =>
+      socialInsurances.map((insurance) => ({
+        value: String(insurance.id),
+        label: insurance.nombre,
+      })),
+    [socialInsurances],
+  );
 
   function toggleSpecialty(specialty: PatientSpecialty, checked: boolean) {
     const current = watch("especialidad") ?? [];
@@ -53,14 +65,15 @@ export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
     setSubmitError(null);
 
     try {
-      await createPatient.mutateAsync({
+      const { patient } = await createPatient.mutateAsync({
         ...values,
         fotoPerfilUrl: avatarUrl,
         sexo: values.sexo || "",
+        obraSocialIds: values.obraSocialIds ?? [],
         especialidad: values.especialidad ?? [],
       });
 
-      router.push(`/app/${encodeURIComponent(clinicSlug)}/pacientes`);
+      router.push(`/app/${encodeURIComponent(clinicSlug)}/pacientes/${patient.id}`);
       router.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo guardar el paciente.";
@@ -102,6 +115,18 @@ export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
           </div>
 
           <div className="grid gap-2">
+            <Label htmlFor="fecha-nacimiento">Fecha de Nacimiento*</Label>
+            <Input
+              id="fecha-nacimiento"
+              type="date"
+              {...register("fechaNacimiento", { required: "Este campo es obligatorio." })}
+            />
+            {errors.fechaNacimiento ? (
+              <p className="text-sm text-destructive">{errors.fechaNacimiento.message}</p>
+            ) : null}
+          </div>
+
+          <div className="grid gap-2">
             <Label htmlFor="dni">DNI</Label>
             <Input id="dni" {...register("dni")} />
           </div>
@@ -111,9 +136,31 @@ export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
             <Input id="email" type="email" {...register("email")} />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="obra-social">Obra Social</Label>
-            <Input id="obra-social" {...register("obraSocial")} />
+          <div className="grid gap-2 md:col-span-2">
+            <Label>Obras sociales</Label>
+            <Controller
+              control={control}
+              name="obraSocialIds"
+              render={({ field }) => (
+                <MultiSelect
+                  options={socialInsuranceOptions}
+                  value={(field.value ?? []).map((id) => String(id))}
+                  onValueChange={(selectedValues) => {
+                    const next = selectedValues
+                      .map((value) => Number.parseInt(value, 10))
+                      .filter((id): id is number => Number.isInteger(id) && id > 0);
+                    field.onChange(next);
+                  }}
+                  placeholder={
+                    isLoadingSocialInsurances
+                      ? "Cargando obras sociales..."
+                      : "Seleccioná una o más obras sociales"
+                  }
+                  searchPlaceholder="Buscar obra social..."
+                  emptyIndicator="No se encontraron obras sociales."
+                />
+              )}
+            />
           </div>
 
           <div className="grid gap-2">
@@ -160,18 +207,6 @@ export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
               <option value="masculino">Masculino</option>
               <option value="otro">Otro</option>
             </select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="fecha-nacimiento">Fecha de Nacimiento*</Label>
-            <Input
-              id="fecha-nacimiento"
-              type="date"
-              {...register("fechaNacimiento", { required: "Este campo es obligatorio." })}
-            />
-            {errors.fechaNacimiento ? (
-              <p className="text-sm text-destructive">{errors.fechaNacimiento.message}</p>
-            ) : null}
           </div>
 
           <div className="grid gap-2">

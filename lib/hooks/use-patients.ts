@@ -2,7 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { CreatePatientInput, Patient, PatientSearchResult } from "@/lib/patients";
+import type {
+  CreatePatientInput,
+  ObraSocial,
+  Patient,
+  PatientSearchResult,
+} from "@/lib/patients";
 
 type PatientsResponse = {
   patients?: Patient[];
@@ -31,14 +36,35 @@ type PatientResponse = {
   error?: string;
 };
 
+type SocialInsurancesResponse = {
+  obrasSociales?: ObraSocial[];
+  error?: string;
+};
+
 async function parseResponse<T>(response: Response): Promise<T> {
   const data = (await response.json()) as T & { error?: string };
 
   if (!response.ok) {
-    throw new Error(data.error ?? "Request failed.");
+    throw new Error(data.error ?? "La solicitud falló.");
   }
 
   return data;
+}
+
+export function useSocialInsurances(clinicSlug: string) {
+  return useQuery({
+    queryKey: ["social-insurances", clinicSlug],
+    queryFn: async ({ signal }) => {
+      const response = await fetch(
+        `/api/clinics/${encodeURIComponent(clinicSlug)}/obras-sociales`,
+        { signal },
+      );
+      const data = await parseResponse<SocialInsurancesResponse>(response);
+      return data.obrasSociales ?? [];
+    },
+    enabled: Boolean(clinicSlug),
+    staleTime: 60_000,
+  });
 }
 
 export function usePatients(

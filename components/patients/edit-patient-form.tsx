@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 
 import { PatientAvatarUploader } from "@/components/patients/patient-avatar-uploader";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { Textarea } from "@/components/ui/textarea";
-import { usePatient, useUpdatePatient } from "@/lib/hooks/use-patients";
+import { usePatient, useSocialInsurances, useUpdatePatient } from "@/lib/hooks/use-patients";
 import type { CreatePatientInput, Patient, PatientSpecialty } from "@/lib/patients";
 
 type EditPatientFormProps = {
@@ -34,7 +35,7 @@ function mapPatientToFormValues(patient: Patient | null | undefined) {
     apellido: patient.apellido ?? "",
     dni: patient.dni ?? "",
     email: patient.email ?? "",
-    obraSocial: patient.obra_social ?? "",
+    obraSocialIds: (patient.obras_sociales ?? []).map((insurance) => insurance.id),
     planObraSocial: patient.plan_obra_social ?? "",
     especialidad: patient.especialidad ?? [],
     numeroInterno: patient.numero_interno ?? "",
@@ -60,6 +61,7 @@ export function EditPatientForm({ clinicSlug, patientId }: EditPatientFormProps)
     clinicSlug,
     isValidPatientId ? parsedPatientId : null,
   );
+  const { data: socialInsurances = [], isPending: isLoadingSocialInsurances } = useSocialInsurances(clinicSlug);
   const updatePatient = useUpdatePatient(clinicSlug, isValidPatientId ? parsedPatientId : 0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -70,6 +72,7 @@ export function EditPatientForm({ clinicSlug, patientId }: EditPatientFormProps)
     watch,
     setValue,
     reset,
+    control,
     formState: { errors },
   } = useForm<CreatePatientInput>({
     defaultValues: {
@@ -77,7 +80,7 @@ export function EditPatientForm({ clinicSlug, patientId }: EditPatientFormProps)
       apellido: "",
       dni: "",
       email: "",
-      obraSocial: "",
+      obraSocialIds: [],
       planObraSocial: "",
       especialidad: [],
       numeroInterno: "",
@@ -101,6 +104,14 @@ export function EditPatientForm({ clinicSlug, patientId }: EditPatientFormProps)
     reset(values);
     setAvatarUrl(patient?.foto_perfil_url ?? null);
   }, [patient, reset]);
+  const socialInsuranceOptions = useMemo(
+    () =>
+      socialInsurances.map((insurance) => ({
+        value: String(insurance.id),
+        label: insurance.nombre,
+      })),
+    [socialInsurances],
+  );
   const selectedSpecialties = watch("especialidad") ?? [];
 
   function toggleSpecialty(specialty: PatientSpecialty, checked: boolean) {
@@ -120,6 +131,7 @@ export function EditPatientForm({ clinicSlug, patientId }: EditPatientFormProps)
         ...values,
         fotoPerfilUrl: avatarUrl,
         sexo: values.sexo || "",
+        obraSocialIds: values.obraSocialIds ?? [],
         especialidad: values.especialidad ?? [],
       });
 
@@ -210,6 +222,18 @@ export function EditPatientForm({ clinicSlug, patientId }: EditPatientFormProps)
           </div>
 
           <div className="grid gap-2">
+            <Label htmlFor="fecha-nacimiento">Fecha de Nacimiento*</Label>
+            <Input
+              id="fecha-nacimiento"
+              type="date"
+              {...register("fechaNacimiento", { required: "Este campo es obligatorio." })}
+            />
+            {errors.fechaNacimiento ? (
+              <p className="text-sm text-destructive">{errors.fechaNacimiento.message}</p>
+            ) : null}
+          </div>
+
+          <div className="grid gap-2">
             <Label htmlFor="dni">DNI</Label>
             <Input id="dni" {...register("dni")} />
           </div>
@@ -219,9 +243,31 @@ export function EditPatientForm({ clinicSlug, patientId }: EditPatientFormProps)
             <Input id="email" type="email" {...register("email")} />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="obra-social">Obra Social</Label>
-            <Input id="obra-social" {...register("obraSocial")} />
+          <div className="grid gap-2 md:col-span-2">
+            <Label>Obras sociales</Label>
+            <Controller
+              control={control}
+              name="obraSocialIds"
+              render={({ field }) => (
+                <MultiSelect
+                  options={socialInsuranceOptions}
+                  value={(field.value ?? []).map((id) => String(id))}
+                  onValueChange={(selectedValues) => {
+                    const next = selectedValues
+                      .map((value) => Number.parseInt(value, 10))
+                      .filter((id): id is number => Number.isInteger(id) && id > 0);
+                    field.onChange(next);
+                  }}
+                  placeholder={
+                    isLoadingSocialInsurances
+                      ? "Cargando obras sociales..."
+                      : "Seleccioná una o más obras sociales"
+                  }
+                  searchPlaceholder="Buscar obra social..."
+                  emptyIndicator="No se encontraron obras sociales."
+                />
+              )}
+            />
           </div>
 
           <div className="grid gap-2">
@@ -268,18 +314,6 @@ export function EditPatientForm({ clinicSlug, patientId }: EditPatientFormProps)
               <option value="masculino">Masculino</option>
               <option value="otro">Otro</option>
             </select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="fecha-nacimiento">Fecha de Nacimiento*</Label>
-            <Input
-              id="fecha-nacimiento"
-              type="date"
-              {...register("fechaNacimiento", { required: "Este campo es obligatorio." })}
-            />
-            {errors.fechaNacimiento ? (
-              <p className="text-sm text-destructive">{errors.fechaNacimiento.message}</p>
-            ) : null}
           </div>
 
           <div className="grid gap-2">

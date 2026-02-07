@@ -1,5 +1,10 @@
 export type PatientSex = "masculino" | "femenino" | "otro" | null;
 export type PatientSpecialty = "ortopedia" | "ortodoncia";
+export type ObraSocial = {
+  id: number;
+  nombre: string;
+  logo: string | null;
+};
 
 export type Patient = {
   id: number;
@@ -10,6 +15,7 @@ export type Patient = {
   dni: string | null;
   email: string | null;
   obra_social: string | null;
+  obras_sociales: ObraSocial[];
   plan_obra_social: string | null;
   especialidad: PatientSpecialty[] | null;
   numero_interno: string | null;
@@ -39,7 +45,7 @@ export type CreatePatientInput = {
   apellido: string;
   dni?: string | null;
   email?: string | null;
-  obraSocial?: string | null;
+  obraSocialIds?: number[];
   planObraSocial?: string | null;
   especialidad?: PatientSpecialty[];
   numeroInterno?: string | null;

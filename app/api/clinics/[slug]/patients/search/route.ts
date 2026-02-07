@@ -1,11 +1,23 @@
 import { NextResponse } from "next/server";
 
 import { getUserClinics } from "@/lib/clinics";
+import type { ObraSocial } from "@/lib/patients";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 type RouteContext = {
   params: Promise<{ slug: string }>;
+};
+
+type PatientSearchRow = {
+  id: number;
+  nombre: string;
+  apellido: string;
+  foto_perfil_url: string | null;
+  dni: string | null;
+  telefono_principal: string | null;
+  obra_social: string | null;
+  pacientes_obras_sociales?: { obras_sociales: ObraSocial | ObraSocial[] | null }[] | null;
 };
 
 function sanitizeSearchValue(value: string) {
@@ -30,7 +42,7 @@ export async function GET(request: Request, context: RouteContext) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
 
   const { data: clinics, error } = await getUserClinics(supabase, user.id);
@@ -42,7 +54,7 @@ export async function GET(request: Request, context: RouteContext) {
   const clinic = (clinics ?? []).find((item) => item.slug === slug);
 
   if (!clinic) {
-    return NextResponse.json({ error: "Clinic not found." }, { status: 404 });
+    return NextResponse.json({ error: "Clínica no encontrada." }, { status: 404 });
   }
 
   let adminSupabase;
@@ -53,7 +65,7 @@ export async function GET(request: Request, context: RouteContext) {
     const message =
       clientError instanceof Error
         ? clientError.message
-        : "Failed to initialize admin client.";
+        : "No se pudo inicializar el cliente administrador.";
 
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -61,7 +73,9 @@ export async function GET(request: Request, context: RouteContext) {
   const pattern = `%${q}%`;
   const { data: patients, error: patientsError } = await adminSupabase
     .from("pacientes")
-    .select("id,nombre,apellido,foto_perfil_url,dni,telefono_principal,obra_social")
+    .select(
+      "id,nombre,apellido,foto_perfil_url,dni,telefono_principal,obra_social,pacientes_obras_sociales(obras_sociales(id,nombre,logo))",
+    )
     .eq("clinica_id", clinic.id)
     .or(
       [
@@ -78,5 +92,27 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ error: patientsError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ patients: patients ?? [] });
+  const mappedPatients = ((patients ?? []) as unknown as PatientSearchRow[]).map((patient) => {
+    const firstInsurance = patient.pacientes_obras_sociales
+      ?.map((relation) => {
+        if (Array.isArray(relation.obras_sociales)) {
+          return relation.obras_sociales[0] ?? null;
+        }
+
+        return relation.obras_sociales;
+      })
+      .find((insurance): insurance is ObraSocial => Boolean(insurance));
+
+    return {
+      id: patient.id,
+      nombre: patient.nombre,
+      apellido: patient.apellido,
+      foto_perfil_url: patient.foto_perfil_url,
+      dni: patient.dni,
+      telefono_principal: patient.telefono_principal,
+      obra_social: firstInsurance?.nombre ?? patient.obra_social ?? null,
+    };
+  });
+
+  return NextResponse.json({ patients: mappedPatients });
 }

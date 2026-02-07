@@ -107,6 +107,18 @@ function formatSpecialty(value: Patient["especialidad"]) {
     .join(", ");
 }
 
+function formatSocialInsurances(value: Patient["obras_sociales"]) {
+  const names = (value ?? [])
+    .map((insurance) => insurance.nombre.trim())
+    .filter(Boolean);
+
+  if (names.length === 0) {
+    return "Sin obra social";
+  }
+
+  return names.join(", ");
+}
+
 function buildBasicData(patient: Patient) {
   return [
     { label: "DNI", value: showValue(patient.dni) },
@@ -118,7 +130,7 @@ function buildBasicData(patient: Patient) {
       label: "Teléfono principal",
       value: showValue(patient.telefono_principal),
     },
-    { label: "Obra social", value: showValue(patient.obra_social) },
+    { label: "Obras sociales", value: formatSocialInsurances(patient.obras_sociales) },
   ];
 }
 
