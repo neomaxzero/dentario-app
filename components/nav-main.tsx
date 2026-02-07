@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronRight, type LucideIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import {
   Collapsible,
@@ -32,6 +33,8 @@ export function NavMain({
     }[];
   }[];
 }) {
+  const pathname = usePathname();
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Secciones</SidebarGroupLabel>
@@ -58,7 +61,14 @@ export function NavMain({
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
                       <SidebarMenuSubButton asChild>
-                        <a href={subItem.url}>
+                        <a
+                          href={subItem.url}
+                          className={
+                            pathname === subItem.url || pathname.startsWith(`${subItem.url}/`)
+                              ? "bg-sidebar-accent/60 text-sidebar-foreground"
+                              : undefined
+                          }
+                        >
                           <span className="text-sm">{subItem.title}</span>
                         </a>
                       </SidebarMenuSubButton>

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import {
   Activity,
   Building2,
@@ -40,6 +41,8 @@ export function AppSidebar({
   };
   isAdmin: boolean;
 }) {
+  const pathname = usePathname();
+
   const teams = React.useMemo(
     () =>
       clinics.map((clinic, index) => ({
@@ -48,33 +51,37 @@ export function AppSidebar({
         logo: clinicIcons[index % clinicIcons.length],
         logoUrl: clinic.logo,
         plan: "Dentario",
-        url: clinic.slug ? `/app/${clinic.slug}` : "#",
+        url: clinic.slug ? `/app/${clinic.slug}/pacientes` : "#",
       })),
     [clinics]
   );
 
   const navMain = React.useMemo(
-    () => [
-      {
-        title: "Pacientes",
-        url: "#",
-        icon: Users,
-        isActive: true,
-        items: [
-          { title: "Historiales", url: "#" },
-        ],
-      },
-      {
-        title: "Configuracion",
-        url: "#",
-        icon: Settings2,
-        items: [
-          { title: "Clinica", url: "#" },
-          { title: "Equipo", url: "#" },
-        ],
-      },
-    ],
-    []
+    () => {
+      const patientsUrl = activeClinic.slug
+        ? `/app/${encodeURIComponent(activeClinic.slug)}/pacientes`
+        : "#";
+
+      return [
+        {
+          title: "Adminstrar",
+          url: patientsUrl,
+          icon: Users,
+          isActive: pathname.startsWith(patientsUrl),
+          items: [{ title: "Pacientes", url: patientsUrl }],
+        },
+        {
+          title: "Configuracion",
+          url: "#",
+          icon: Settings2,
+          items: [
+            { title: "Clinica", url: "#" },
+            { title: "Equipo", url: "#" },
+          ],
+        },
+      ];
+    },
+    [activeClinic.slug, pathname]
   );
 
   return (
@@ -85,7 +92,9 @@ export function AppSidebar({
           activeTeamId={activeClinic.id}
           canAddClinic={isAdmin}
           addClinicUrl={
-            activeClinic.slug ? `/app/${activeClinic.slug}?createClinic=1` : "#"
+            activeClinic.slug
+              ? `/app/${activeClinic.slug}/pacientes?createClinic=1`
+              : "#"
           }
         />
       </SidebarHeader>
