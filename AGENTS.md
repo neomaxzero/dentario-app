@@ -11,4 +11,4 @@
 
 ## Components
 
-- For new components always first find in the ShadcnMCP server
+- [ ] For new components always first find in the ShadcnMCP server

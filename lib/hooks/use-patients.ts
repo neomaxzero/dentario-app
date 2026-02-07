@@ -26,6 +26,11 @@ type SearchPatientsResponse = {
   error?: string;
 };
 
+type PatientResponse = {
+  patient?: Patient;
+  error?: string;
+};
+
 async function parseResponse<T>(response: Response): Promise<T> {
   const data = (await response.json()) as T & { error?: string };
 
@@ -128,5 +133,24 @@ export function useSearchPatients(clinicSlug: string, query: string) {
     },
     enabled: Boolean(clinicSlug) && normalizedQuery.length >= 2,
     staleTime: 30_000,
+  });
+}
+
+export function usePatient(clinicSlug: string, patientId: number | null) {
+  return useQuery({
+    queryKey: ["patient", clinicSlug, patientId],
+    queryFn: async ({ signal }) => {
+      if (!patientId) {
+        return null;
+      }
+
+      const response = await fetch(
+        `/api/clinics/${encodeURIComponent(clinicSlug)}/patients/${patientId}`,
+        { signal },
+      );
+      const data = await parseResponse<PatientResponse>(response);
+      return data.patient ?? null;
+    },
+    enabled: Boolean(clinicSlug) && typeof patientId === "number" && patientId > 0,
   });
 }

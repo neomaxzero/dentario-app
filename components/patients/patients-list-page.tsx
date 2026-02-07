@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,9 @@ function getInitials(name: string, lastName: string) {
 }
 
 export function PatientsListPage({ clinicSlug }: { clinicSlug: string }) {
+  const router = useRouter();
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 12;
   const { data, isPending, isFetching, error } = usePatients(clinicSlug, {
     page,
     pageSize,
@@ -77,6 +79,8 @@ export function PatientsListPage({ clinicSlug }: { clinicSlug: string }) {
 
     return [page - 2, page - 1, page, page + 1, page + 2];
   }, [page, totalPages]);
+  const rowCellClass =
+    "py-2 pr-2 transition-colors duration-150 group-hover:bg-green-50 group-hover:text-sidebar-accent-foreground group-focus-visible:bg-sidebar-accent group-focus-visible:text-sidebar-accent-foreground";
 
   return (
     <div className="flex min-h-[calc(100dvh-6rem)] flex-col rounded-xl border border-border/60 bg-card p-6">
@@ -100,11 +104,10 @@ export function PatientsListPage({ clinicSlug }: { clinicSlug: string }) {
         <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-muted-foreground">
-              <th className="pb-2 pr-2 font-medium">Foto</th>
+              <th className="w-12 min-w-12 shrink-0 pb-2 pr-2 font-medium">
+                Foto
+              </th>
               <th className="pb-2 pr-2 font-medium">Nombre</th>
-              <th className="pb-2 pr-2 font-medium">DNI</th>
-              <th className="pb-2 pr-2 font-medium">Obra social</th>
-              <th className="pb-2 pr-2 font-medium">Telefono principal</th>
             </tr>
           </thead>
           <tbody>
@@ -123,20 +126,11 @@ export function PatientsListPage({ clinicSlug }: { clinicSlug: string }) {
                   key={`loading-row-${index}`}
                   className="border-b border-border/60"
                 >
-                  <td className="py-2 pr-2">
+                  <td className="w-12 min-w-12 shrink-0 py-2 pr-2">
                     <div className="h-9 w-9 animate-pulse rounded-lg bg-muted" />
                   </td>
                   <td className="py-2 pr-2">
                     <div className="h-4 w-40 animate-pulse rounded bg-muted" />
-                  </td>
-                  <td className="py-2 pr-2">
-                    <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-                  </td>
-                  <td className="py-2 pr-2">
-                    <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-                  </td>
-                  <td className="py-2 pr-2">
-                    <div className="h-4 w-28 animate-pulse rounded bg-muted" />
                   </td>
                 </tr>
               ))
@@ -150,9 +144,31 @@ export function PatientsListPage({ clinicSlug }: { clinicSlug: string }) {
               </tr>
             ) : (
               patients.map((patient) => (
-                <tr key={patient.id} className="border-b border-border/60">
-                  <td className="py-2 pr-2">
-                    <Avatar className="h-9 w-9 rounded-lg">
+                <tr
+                  key={patient.id}
+                  role="link"
+                  tabIndex={0}
+                  className="group cursor-pointer border-b border-border/60 focus-visible:outline-none"
+                  onClick={() => {
+                    router.push(
+                      `/app/${encodeURIComponent(clinicSlug)}/pacientes/${patient.id}`,
+                    );
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" && event.key !== " ") {
+                      return;
+                    }
+
+                    event.preventDefault();
+                    router.push(
+                      `/app/${encodeURIComponent(clinicSlug)}/pacientes/${patient.id}`,
+                    );
+                  }}
+                >
+                  <td
+                    className={`${rowCellClass} w-12 min-w-12 shrink-0 rounded-l-md`}
+                  >
+                    <Avatar className="h-9 w-9 rounded-lg transition-transform duration-150 group-hover:scale-105 group-focus-visible:scale-105">
                       {patient.foto_perfil_url ? (
                         <AvatarImage
                           src={patient.foto_perfil_url}
@@ -165,12 +181,11 @@ export function PatientsListPage({ clinicSlug }: { clinicSlug: string }) {
                       </AvatarFallback>
                     </Avatar>
                   </td>
-                  <td className="py-2 pr-2">
+                  <td
+                    className={`${rowCellClass} font-medium group-hover:underline`}
+                  >
                     {patient.nombre} {patient.apellido}
                   </td>
-                  <td className="py-2 pr-2">{patient.dni}</td>
-                  <td className="py-2 pr-2">{patient.obra_social}</td>
-                  <td className="py-2 pr-2">{patient.telefono_principal}</td>
                 </tr>
               ))
             )}

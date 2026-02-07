@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
@@ -29,6 +30,7 @@ function getSecondaryLine(
 }
 
 export function PatientTypeaheadSearch({ clinicSlug }: { clinicSlug: string }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const debouncedQuery = useDebouncedValue(query, 300);
@@ -92,6 +94,9 @@ export function PatientTypeaheadSearch({ clinicSlug }: { clinicSlug: string }) {
                     onClick={() => {
                       setQuery(`${patient.nombre} ${patient.apellido}`.trim());
                       setIsFocused(false);
+                      router.push(
+                        `/app/${encodeURIComponent(clinicSlug)}/pacientes/${patient.id}`,
+                      );
                     }}
                     className="group flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-accent hover:text-accent-foreground"
                   >

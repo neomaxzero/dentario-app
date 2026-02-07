@@ -116,7 +116,7 @@ export function CreatePatientForm({ clinicSlug }: { clinicSlug: string }) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="numero-interno">Numero interno</Label>
+            <Label htmlFor="numero-interno">Numero de Afiliado</Label>
             <Input id="numero-interno" {...register("numeroInterno")} />
           </div>
 
